@@ -340,6 +340,139 @@ class Dropout(Layer):
         return gradOut
 
 
+class ConvolutionalLayer(Layer):
+
+    def __init__(self, kernel_shape, stride=1):
+        super().__init__()
+        self.kernel = np.random.rand(kernel_shape[0], kernel_shape[1])
+        self.stride = stride
+
+    def setKernelWeights(self, weights):
+        self.kernel = weights
+
+    def forward(self, dataIn):
+        self.setPrevIn(dataIn)
+        dataOut = self.correlate(dataIn)
+        self.setPrevOut(dataOut)
+        return dataOut
+
+    def correlate(self, image):
+        image_x, image_y = image.shape
+        kernel_x, kernel_y = self.kernel.shape
+        feature_x = 1+int((image_x-kernel_x)/self.stride)
+        feature_y = 1+int((image_y-kernel_y)/self.stride)
+        feature_map = np.zeros((feature_x, feature_y))
+        for a in range(feature_x):
+            for b in range(feature_y):
+                sum = 0
+                for i in range(1, kernel_x+1):
+                    for j in range(1, kernel_y+1):
+                        pos_1 = int(a - (kernel_x/2) + i)
+                        pos_2 = int(b - (kernel_y/2) + j)
+                        sum += image[pos_1][pos_2] * self.kernel[(i-1)][(j-1)] 
+                feature_map[a, b] = sum
+        return feature_map
+    
+    def gradient(self):
+        a = np.where(self.getPrevOut() < 0, 0, 1)
+        if a.ndim == 1:
+            gradient = np.eye(len(a)) * a
+        else:
+            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
+        return gradient
+    
+    def backward(self, gradIn):
+        delta = np.array(gradIn)
+        dgdz = self.gradient()
+        if (dgdz.ndim == 3):
+            gradOut = np.einsum('...i, ...ij', delta, dgdz)
+        else:
+            gradOut = delta * dgdz
+        return gradOut
+ 
+
+class MaxPoolLayer(Layer):
+    
+    def __init__(self, window_shape, stride=1):
+        super().__init__()
+        self.window_shape = window_shape
+        self.stride = stride
+
+    def setKernelWeights(self, weights):
+        self.kernel = weights
+
+    def forward(self, dataIn):
+        self.setPrevIn(dataIn)
+        dataOut = self.pool(dataIn)
+        self.setPrevOut(dataOut)
+        return dataOut
+
+    def pool(self, map):
+        map_x, map_y = map.shape
+        window_x = self.window_shape[0]
+        window_y = self.window_shape[1]
+        feature_x = 1+int((map_x-window_x)/self.stride)
+        feature_y = 1+int((map_y-window_y)/self.stride)
+        feature_map = np.zeros((feature_x, feature_y))
+        for a in range(feature_x):
+            for b in range(feature_y):
+                max = -9999
+                for i in range(1, window_x+1):
+                    for j in range(1, window_y+1):
+                        pos_1 = int(a - (window_x/2) + i)
+                        pos_2 = int(b - (window_y/2) + j)
+                        if map[pos_1][pos_2] > max:
+                            max = map[pos_1][pos_2]
+                feature_map[a, b] = max
+        return feature_map
+    
+    def gradient(self):
+        a = np.where(self.getPrevOut() < 0, 0, 1)
+        if a.ndim == 1:
+            gradient = np.eye(len(a)) * a
+        else:
+            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
+        return gradient
+    
+    def backward (self, gradIn):
+        delta = np.array(gradIn)
+        dgdz = self.gradient()
+        if (dgdz.ndim == 3):
+            gradOut = np.einsum('...i, ...ij', delta, dgdz)
+        else:
+            gradOut = delta * dgdz
+        return gradOut
+
+
+class FlatteningLayer(Layer):
+    
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, dataIn):
+        self.setPrevIn(dataIn)
+        dataOut = dataIn.flatten()
+        self.setPrevOut(dataOut)
+        return dataOut
+    
+    def gradient(self):
+        a = np.where(self.getPrevOut() < 0, 0, 1)
+        if a.ndim == 1:
+            gradient = np.eye(len(a)) * a
+        else:
+            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
+        return gradient
+    
+    def backward (self, gradIn):
+        delta = np.array(gradIn)
+        dgdz = self.gradient()
+        if (dgdz.ndim == 3):
+            gradOut = np.einsum('...i, ...ij', delta, dgdz)
+        else:
+            gradOut = delta * dgdz
+        return gradOut
+
+
 class SquaredError():
 
     def eval(self, Y, Yhat):
@@ -379,3 +512,7 @@ class CrossEntropy():
         epsilon = 0.0000001
         a = -Y / (Yhat + epsilon)
         return a
+    
+
+class Boltzman():
+    pass
