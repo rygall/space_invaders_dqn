@@ -373,17 +373,30 @@ class ConvolutionalLayer(Layer):
                 feature_map[a, b] = sum
         return feature_map
     
-    def gradient(self):
-        a = np.where(self.getPrevOut() < 0, 0, 1)
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
+    def grad_correlate(self, gradIn):
+        prevIn_x, prevIn_y = self.getPrevIn().shape
+        gradIn_x, gradIn_y = gradIn.shape
+        feature_x = 1+int((prevIn_x-gradIn_x)/self.stride)
+        feature_y = 1+int((prevIn_y-gradIn_y)/self.stride)
+        gradient = np.zeros((feature_x, feature_y))
+        for a in range(feature_x):
+            for b in range(feature_y):
+                sum = 0
+                for i in range(1, gradIn_x+1):
+                    for j in range(1, gradIn_y+1):
+                        pos_1 = int(a - (gradIn_x/2) + i)
+                        pos_2 = int(b - (gradIn_y/2) + j)
+                        sum += self.getPrevIn()[pos_1][pos_2] * gradIn[(i-1)][(j-1)] 
+                gradient[a, b] = sum
+        return gradient
+    
+    def gradient(self, gradIn):
+        gradient = self.grad_correlate(gradIn)
         return gradient
     
     def backward(self, gradIn):
         delta = np.array(gradIn)
-        dgdz = self.gradient()
+        dgdz = self.gradient(gradIn)
         if (dgdz.ndim == 3):
             gradOut = np.einsum('...i, ...ij', delta, dgdz)
         else:
