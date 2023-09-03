@@ -14,10 +14,10 @@ L1.setKernelWeights(kernel)
 L2 = layers.MaxPoolLayer(window_shape=(2, 2), stride=1)
 L3 = layers.FlatteningLayer()
 
-L4 = layers.FullyConnectedLayer(sizeIn=9, sizeOut=5)
-L5 = layers.LinearLayer()
 
-L6 = layers.SquaredError()
+L4 = layers.FullyConnectedLayer(sizeIn=9, sizeOut=6)
+L5 = layers.LinearLayer()
+L6 = layers.SqauredTemporalDifferenceError()
 
 # assemble network
 network = [L1, L2, L3, L4, L5, L6]
@@ -34,7 +34,7 @@ for epoch in range(1, max_epochs):
         t = network[k].forward(t)
 
     # backward propogation
-    grad = network[-1].gradient(1, t)
+    grad = network[-1].gradient([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], t, 5)
     for z in range(len(network)-2, 0, -1):
         newgrad = network[z].backward(grad)
         #if(isinstance(network[z], layers.FullyConnectedLayer)):
