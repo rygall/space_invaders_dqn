@@ -527,8 +527,17 @@ class CrossEntropy():
         return a
     
 
-class Bellman():
-    pass
+class SqauredTemporalDifferenceError():
+
+    def __init__(self, gamma=0.5):
+        self.gamma = gamma
+    
+    def eval(self, Q, Q_next, reward):
+        pass
+
+    def gradient(self, Q, Q_next, reward):
+        grad = Q - (reward + (self.gamma*Q_next))
+        return grad
 
 
 class ExperienceReplay():
