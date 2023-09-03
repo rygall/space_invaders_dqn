@@ -158,7 +158,7 @@ class LinearLayer(Layer):
         if dgdz.ndim == 3:
             gradOut = np.einsum('...i, ...ij', delta, dgdz)
         else:
-            gradOut = delta * dgdz
+            gradOut = np.atleast_2d(delta) * dgdz
         return gradOut
 
 
@@ -527,8 +527,9 @@ class CrossEntropy():
         return a
     
 
-class Boltzman():
+class Bellman():
     pass
+
 
 class ExperienceReplay():
     def __init__(self, size = 50):
