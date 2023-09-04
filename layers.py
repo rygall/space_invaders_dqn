@@ -384,8 +384,8 @@ class ConvolutionalLayer(Layer):
                 sum = 0
                 for i in range(1, gradIn_x+1):
                     for j in range(1, gradIn_y+1):
-                        pos_1 = int(a - (gradIn_x/2) + i)
-                        pos_2 = int(b - (gradIn_y/2) + j)
+                        pos_1 = int(a - (gradIn_x//2) + i)
+                        pos_2 = int(b - (gradIn_y//2) + j)
                         sum += self.getPrevIn()[pos_1][pos_2] * gradIn[(i-1)][(j-1)] 
                 gradient[a, b] = sum
         return gradient
@@ -397,12 +397,16 @@ class ConvolutionalLayer(Layer):
     def backward(self, gradIn):
         delta = np.array(gradIn)
         dgdz = self.gradient(gradIn)
+        kernel_x, kernel_y = self.kernel.shape  
+        m = kernel_x / 2
+        n = kernel_y / 2
         if (dgdz.ndim == 3):
             gradOut = np.einsum('...i, ...ij', delta, dgdz)
         else:
+            dgdz = np.pad(dgdz, ((m, n), (m, n)), mode='constant', constant_values=0)
             gradOut = delta * dgdz
         return gradOut
- 
+            
 
 class MaxPoolLayer(Layer):
     
