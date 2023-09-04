@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import random
 np.set_printoptions(suppress=True)
 
 
@@ -158,7 +157,7 @@ class LinearLayer(Layer):
         if dgdz.ndim == 3:
             gradOut = np.einsum('...i, ...ij', delta, dgdz)
         else:
-            gradOut = np.atleast_2d(delta) * dgdz
+            gradOut = delta * dgdz
         return gradOut
 
 
@@ -460,21 +459,10 @@ class MaxPoolLayer(Layer):
         return feature_map
     
     def gradient(self):
-        a = np.where(self.getPrevOut() < 0, 0, 1)
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
-        return gradient
+        pass
     
     def backward (self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        if (dgdz.ndim == 3):
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
-        return gradOut
+        pass
 
 
 class FlatteningLayer(Layer):
@@ -488,17 +476,12 @@ class FlatteningLayer(Layer):
         self.setPrevOut(dataOut)
         return dataOut
     
-    def gradient(self):
-        gradient = np.reshape(self.getPrevOut(), self.getPrevIn().shape)
+    def gradient(self, gradIn):
+        gradient = np.reshape(gradIn, self.getPrevIn().shape, order='C')
         return gradient
     
     def backward (self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        if (dgdz.ndim == 3):
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
+        gradOut = self.gradient(gradIn)
         return gradOut
 
 
@@ -556,28 +539,3 @@ class SqauredTemporalDifferenceError():
         return grad
 
 
-class ExperienceReplay():
-    def __init__(self, size = 50):
-        self.observations = []
-        self.size = size
-        pass
-    
-    def getObs(self):
-        return self.observations
-    
-    def addObs(self, observation, reward, action):
-        if len(self.observations) == self.size:
-            self.observations.pop(0)
-            
-        self.observations.append([observation, reward, action])
-        
-    def getSamples(self, numSamples):
-        if numSamples >= len(self.observations):
-            return self.observations
-        else:
-            indeces = np.random.choice(len(self.observations), numSamples, replace = False)
-            returnObs = []
-            for i in indeces:
-                returnObs.append(self.observations[i])
-            
-            return returnObs
