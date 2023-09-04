@@ -464,16 +464,14 @@ class FlatteningLayer(Layer):
 
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
+
         dataOut = dataIn.flatten()
         self.setPrevOut(dataOut)
+
         return dataOut
     
     def gradient(self):
-        a = np.where(self.getPrevOut() < 0, 0, 1)
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
+        gradient = np.reshape(self.getPrevOut(), self.getPrevIn().shape)
         return gradient
     
     def backward (self, gradIn):
