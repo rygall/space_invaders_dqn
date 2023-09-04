@@ -113,7 +113,6 @@ class FullyConnectedLayer(Layer):
 
     def updateWeights(self, gradIn, epoch):
         dJdb = np.sum(gradIn, axis=0) / gradIn.shape[0]
-        x = self.getPrevIn().T
         dJdW = (self.getPrevIn().T @ gradIn) / gradIn.shape[0]
         self.biases -= self.eta*dJdb
         if self.lr_method == 'base':
