@@ -4,18 +4,17 @@ import matplotlib.pyplot as plt
 
 
 # define our data, weights and biases
-image = np.array([[1, 2, 3, 7, 5], [4, 5, 6, 7, 5], [7, 8, 9, 7, 5], [7, 8, 9, 7, 5], [7, 8, 9, 7, 5]])
+image = np.array([[1, 2, 3, 7, 5, 5], [1, 2, 3, 7, 5, 5], [1, 2, 3, 7, 5, 5], [1, 2, 3, 7, 5, 5], [1, 2, 3, 7, 5, 5], [1, 2, 3, 7, 5, 5]])
 kernel = np.array([[1, 2], [3, 4]])
-print("\nImage:\n", image)
 
 # instantiate layers
 L1 = layers.ConvolutionalLayer(kernel_shape=(2, 2), stride=1)
 L1.setKernelWeights(kernel)
-L2 = layers.MaxPoolLayer(window_shape=(2, 2), stride=1)
+L2 = layers.MaxPoolLayer(window_shape=(2, 2), stride=2)
 L3 = layers.FlatteningLayer()
 
 
-L4 = layers.FullyConnectedLayer(sizeIn=9, sizeOut=6)
+L4 = layers.FullyConnectedLayer(sizeIn=4, sizeOut=6)
 L5 = layers.LinearLayer()
 L6 = layers.SqauredTemporalDifferenceError()
 
