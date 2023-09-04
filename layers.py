@@ -154,10 +154,7 @@ class LinearLayer(Layer):
     def backward (self, gradIn):
         delta = np.array(gradIn)
         dgdz = self.gradient()
-        if dgdz.ndim == 3:
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
+        gradOut = np.einsum('...i, ...ij', delta, dgdz)
         return gradOut
 
 
@@ -174,155 +171,6 @@ class ReLuLayer(Layer):
     
     def gradient(self):
         a = np.where(self.getPrevOut() < 0, 0, 1)
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
-        return gradient
-    
-    def backward (self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        if (dgdz.ndim == 3):
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
-        return gradOut
-
-
-class LogisticSigmoidLayer(Layer):
-
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, dataIn):
-        self.setPrevIn(dataIn)
-        y = 1 / (1+np.exp(-dataIn))
-        self.setPrevOut(y)
-        return y
-
-    def gradient(self):
-        a = self.getPrevOut() * (1 - self.getPrevOut())
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
-        return gradient
-    
-    def backward (self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        if dgdz.ndim == 3:
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
-        return gradOut
-
-
-class TanhLayer(Layer):
-
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, dataIn):
-        self.setPrevIn(dataIn)
-        y = (np.exp(dataIn) - np.exp(-dataIn)) / (np.exp(dataIn) + np.exp(-dataIn))
-        self.setPrevOut(y) 
-        return y
-
-    def gradient(self):
-        a = 1 - (np.power(self.getPrevOut(), 2))
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
-        return gradient
-    
-    def backward (self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        if dgdz.ndim == 3:
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
-        return gradOut
-
-
-class SoftmaxLayer(Layer):
-
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, dataIn):
-        self.setPrevIn(dataIn)
-        a = dataIn
-        if a.ndim == 1:
-            max_value = np.max(dataIn)
-            exp = np.exp(dataIn - max_value)
-            sum = np.sum(exp)
-            y = exp / sum
-        else:
-            max_values = np.max(dataIn, axis=1)
-            max_values = np.atleast_2d(max_values).T
-            exp = np.exp(dataIn - max_values)
-            sum = np.atleast_2d(np.sum(exp, axis=1)).T
-            y = exp / sum
-        self.setPrevOut(y) 
-        return y
-
-    def gradient(self):
-        x = self.getPrevOut()
-        if x.ndim == 1:
-            diag = np.eye(len(x)) * x
-            a = np.atleast_2d(x).T * x
-            gradient = diag - a
-        else:
-            diag = np.eye(np.size(x, axis=1)) * x[:, np.newaxis, :]
-            a = []
-            for i in range(0, np.size(x, axis=0)):
-                result = np.atleast_2d(x[i]).T * x[i]
-                a.append(result)
-            gradient = diag - a
-        return gradient
-
-    def backward(self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        if dgdz.ndim == 3:
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
-        return gradOut
-
-
-class Dropout(Layer):
-
-    def __init__(self, p=0.5):
-        super().__init__()
-        self.p = p
-
-    def forward(self, dataIn, mode='inactive'):
-        if mode == 'active':
-            self.setPrevIn(dataIn)
-            p = np.random.uniform(low=0.0, high=1.0, size=np.size(dataIn, axis=1))
-            gz = dataIn
-            for i in range(0, np.size(dataIn, axis=1)):
-                if p[i] < self.p:
-                    gz[:, i] = 0.0
-                else:
-                    gz[:, i]*(1/(1-self.p))
-            gz = np.array(gz)
-            self.setPrevOut(gz) 
-            return gz
-        else:
-            self.setPrevIn(dataIn)
-            self.setPrevOut(dataIn)
-            return dataIn
-
-    def gradient(self):
-        a = self.getPrevOut()
-        for i in range(0, np.size(a, axis=1)):
-            a[:, i] = (1/(1-self.p)) * (a[:, i] == 0.0)
         if a.ndim == 1:
             gradient = np.eye(len(a)) * a
         else:
@@ -458,10 +306,14 @@ class MaxPoolLayer(Layer):
                 feature_map[a, b] = max
         return feature_map
     
-    def gradient(self):
+    def map(self, gradIn):
         pass
     
+    def gradient(self,):
+        
+    
     def backward (self, gradIn):
+        gradOut = self.gradient(gradIn)
         pass
 
 
@@ -485,47 +337,6 @@ class FlatteningLayer(Layer):
         return gradOut
 
 
-class SquaredError():
-
-    def eval(self, Y, Yhat):
-        a = np.mean((Y - Yhat) * (Y - Yhat))
-        return a
-
-    def gradient(self, Y, Yhat):
-        a = -2*(Y-Yhat)
-        return a
-
-
-class LogLoss():
-
-    def eval(self, Y, Yhat):
-        epsilon = 0.0000001
-        a = np.mean(-((Y * np.log(Yhat+epsilon)) + ((1-Y) * np.log(1-Yhat+epsilon))))
-        return a
-
-    def gradient(self, Y, Yhat):
-        epsilon = 0.0000001
-        a = -(Y-Yhat) / (Yhat * (1 - Yhat) + epsilon)
-        return a
-
-
-class CrossEntropy():
-
-    def eval(self, Y, Yhat):
-        epsilon = 0.0000001
-        x = np.array(Y)
-        if x.ndim == 1:
-            a = -np.mean(np.sum((Y * np.log(Yhat+epsilon)), axis=0))
-        else:
-            a = -np.mean(np.sum((Y * np.log(Yhat+epsilon)), axis=1))
-        return a
-
-    def gradient(self, Y, Yhat):
-        epsilon = 0.0000001
-        a = -Y / (Yhat + epsilon)
-        return a
-    
-
 class SqauredTemporalDifferenceError():
 
     def __init__(self, gamma=0.5):
@@ -539,3 +350,45 @@ class SqauredTemporalDifferenceError():
         return grad
 
 
+class Dropout(Layer):
+
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+
+    def forward(self, dataIn, mode='inactive'):
+        if mode == 'active':
+            self.setPrevIn(dataIn)
+            p = np.random.uniform(low=0.0, high=1.0, size=np.size(dataIn, axis=1))
+            gz = dataIn
+            for i in range(0, np.size(dataIn, axis=1)):
+                if p[i] < self.p:
+                    gz[:, i] = 0.0
+                else:
+                    gz[:, i]*(1/(1-self.p))
+            gz = np.array(gz)
+            self.setPrevOut(gz) 
+            return gz
+        else:
+            self.setPrevIn(dataIn)
+            self.setPrevOut(dataIn)
+            return dataIn
+
+    def gradient(self):
+        a = self.getPrevOut()
+        for i in range(0, np.size(a, axis=1)):
+            a[:, i] = (1/(1-self.p)) * (a[:, i] == 0.0)
+        if a.ndim == 1:
+            gradient = np.eye(len(a)) * a
+        else:
+            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
+        return gradient
+    
+    def backward (self, gradIn):
+        delta = np.array(gradIn)
+        dgdz = self.gradient()
+        if (dgdz.ndim == 3):
+            gradOut = np.einsum('...i, ...ij', delta, dgdz)
+        else:
+            gradOut = delta * dgdz
+        return gradOut
