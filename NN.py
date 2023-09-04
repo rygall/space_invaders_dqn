@@ -3,19 +3,25 @@ import numpy as np
 import layers
 
 env = gym.make("ALE/SpaceInvaders-v5", render_mode="human", obs_type="grayscale")
-kernel = np.array([[1, 2], [3, 4]])
 
-L1 = layers.ConvolutionalLayer(kernel_shape=(2, 2), stride=1)
-L1.setKernelWeights(kernel)
-L2 = layers.MaxPoolLayer(window_shape=(2, 2), stride=1)
-L3 = layers.FlatteningLayer()
+# instantiate layers
+L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4), stride=4)
+L2 = layers.ReLuLayer()
 
-L4 = layers.FullyConnectedLayer(sizeIn=32864, sizeOut=6)
-L5 = layers.LinearLayer()
-L6 = layers.SqauredTemporalDifferenceError()
+L3 = layers.ConvolutionalLayer(kernel_shape=(2, 2), stride=2)
+L4 = layers.ReLuLayer()
+
+L5 = layers.MaxPoolLayer(window_shape=(2, 2), stride=2)
+L6 = layers.FlatteningLayer()
+
+L7 = layers.FullyConnectedLayer(sizeIn=130, sizeOut=50)
+L8 = layers.ReLuLayer()
+
+L9 = layers.FullyConnectedLayer(sizeIn=50, sizeOut=6)
+L10 = layers.SqauredTemporalDifferenceError()
 
 # assemble network
-network = [L1, L2, L3, L4, L5, L6]
+network = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10]
 
 # define training parameters
 max_epochs = 300

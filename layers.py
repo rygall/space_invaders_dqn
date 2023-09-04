@@ -179,10 +179,7 @@ class ReLuLayer(Layer):
     def backward (self, gradIn):
         delta = np.array(gradIn)
         dgdz = self.gradient()
-        if (dgdz.ndim == 3):
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
+        gradOut = np.einsum('...i, ...ij', delta, dgdz)
         return gradOut
 
 
@@ -295,7 +292,7 @@ class MaxPoolLayer(Layer):
         feature_map = np.zeros((feature_x, feature_y))
         for a in range(feature_x):
             for b in range(feature_y):
-                max = -9999
+                max = float('-inf')
                 for i in range(1, window_x+1):
                     for j in range(1, window_y+1):
                         pos_1 = int(a - (window_x//2) + i)
@@ -307,19 +304,22 @@ class MaxPoolLayer(Layer):
     
     def map(self, prev_in, gradIn):
         prev_x, prev_y = prev_in.shape
+        grad = np.zeros((prev_x, prev_y))
         window_x = self.window_shape[0]
         window_y = self.window_shape[1]
         slides_x = 1+int((prev_x-window_x)/self.stride)
         slides_y = 1+int((prev_y-window_y)/self.stride)
-        grad = np.zeros((prev_x, prev_y))
+
         for a in range(slides_x):
             for b in range(slides_y):
-                max = -9999
+                index_a = a * self.stride
+                index_b = b * self.stride
+                max = float('-inf')
                 max_index = [0, 0]
                 for i in range(1, window_x+1):
                     for j in range(1, window_y+1):
-                        pos_1 = int(a - (window_x//2) + i)
-                        pos_2 = int(b - (window_y//2) + j)
+                        pos_1 = int(index_a - (window_x//2) + i)
+                        pos_2 = int(index_b - (window_y//2) + j)
                         if prev_in[pos_1][pos_2] > max:
                             max = prev_in[pos_1][pos_2]
                             max_index[0] = pos_1
@@ -362,9 +362,6 @@ class SqauredTemporalDifferenceError():
     def __init__(self, gamma=0.5):
         self.gamma = gamma
     
-    def eval(self, Q, Q_next, reward):
-        pass
-
     def gradient(self, Q, Q_next, reward):
         grad = Q - (reward + (self.gamma*Q_next))
         return grad
