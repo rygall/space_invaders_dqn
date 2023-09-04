@@ -309,7 +309,6 @@ class MaxPoolLayer(Layer):
         window_y = self.window_shape[1]
         slides_x = 1+int((prev_x-window_x)/self.stride)
         slides_y = 1+int((prev_y-window_y)/self.stride)
-
         for a in range(slides_x):
             for b in range(slides_y):
                 index_a = a * self.stride
@@ -357,7 +356,7 @@ class FlatteningLayer(Layer):
         return gradOut
 
 
-class SqauredTemporalDifferenceError():
+class SquaredTemporalDifferenceError():
 
     def __init__(self, gamma=0.5):
         self.gamma = gamma
@@ -365,47 +364,3 @@ class SqauredTemporalDifferenceError():
     def gradient(self, Q, Q_next, reward):
         grad = Q - (reward + (self.gamma*Q_next))
         return grad
-
-
-class Dropout(Layer):
-
-    def __init__(self, p=0.5):
-        super().__init__()
-        self.p = p
-
-    def forward(self, dataIn, mode='inactive'):
-        if mode == 'active':
-            self.setPrevIn(dataIn)
-            p = np.random.uniform(low=0.0, high=1.0, size=np.size(dataIn, axis=1))
-            gz = dataIn
-            for i in range(0, np.size(dataIn, axis=1)):
-                if p[i] < self.p:
-                    gz[:, i] = 0.0
-                else:
-                    gz[:, i]*(1/(1-self.p))
-            gz = np.array(gz)
-            self.setPrevOut(gz) 
-            return gz
-        else:
-            self.setPrevIn(dataIn)
-            self.setPrevOut(dataIn)
-            return dataIn
-
-    def gradient(self):
-        a = self.getPrevOut()
-        for i in range(0, np.size(a, axis=1)):
-            a[:, i] = (1/(1-self.p)) * (a[:, i] == 0.0)
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
-        return gradient
-    
-    def backward (self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        if (dgdz.ndim == 3):
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            gradOut = delta * dgdz
-        return gradOut
