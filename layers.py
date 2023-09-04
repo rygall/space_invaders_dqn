@@ -367,8 +367,8 @@ class ConvolutionalLayer(Layer):
                 sum = 0
                 for i in range(1, kernel_x+1):
                     for j in range(1, kernel_y+1):
-                        pos_1 = int(a - (kernel_x/2) + i)
-                        pos_2 = int(b - (kernel_y/2) + j)
+                        pos_1 = int(a - (kernel_x//2) + i)
+                        pos_2 = int(b - (kernel_y//2) + j)
                         sum += image[pos_1][pos_2] * self.kernel[(i-1)][(j-1)] 
                 feature_map[a, b] = sum
         return feature_map
@@ -390,21 +390,34 @@ class ConvolutionalLayer(Layer):
                 gradient[a, b] = sum
         return gradient
     
+    def backprop_correlate(self, pad_grad):
+        pad_grad_x, pad_grad_y = pad_grad.shape
+        kernel_transpose = np.transpose(kernel_transpose)
+        kt_x, kt_y = kernel_transpose.shape
+        feature_x = 1+int((pad_grad_x-kt_x)/self.stride)
+        feature_y = 1+int((pad_grad_y-kt_y)/self.stride)
+        gradOut = np.zeros((feature_x, feature_y))
+        for a in range(feature_x):
+            for b in range(feature_y):
+                sum = 0
+                for i in range(1, kt_x+1):
+                    for j in range(1, kt_y+1):
+                        pos_1 = int(a - (kt_x//2) + i)
+                        pos_2 = int(b - (kt_y//2) + j)
+                        sum += pad_grad[pos_1][pos_2] * kernel_transpose[(i-1)][(j-1)] 
+                gradOut[a, b] = sum
+        return gradOut
+    
     def gradient(self, gradIn):
         gradient = self.grad_correlate(gradIn)
         return gradient
     
     def backward(self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient(gradIn)
-        kernel_x, kernel_y = self.kernel.shape  
-        m = kernel_x / 2
-        n = kernel_y / 2
-        if (dgdz.ndim == 3):
-            gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        else:
-            dgdz = np.pad(dgdz, ((m, n), (m, n)), mode='constant', constant_values=0)
-            gradOut = delta * dgdz
+        kernel_x = self.kernel.shape[0]  
+        m = kernel_x // 2
+        djdf = self.gradient(gradIn)
+        djdf_padded = np.pad(djdf, ((m, m), (m, m)), mode='constant', constant_values=0)
+        gradOut = self.backprop_correlate(djdf_padded)
         return gradOut
             
 
@@ -417,6 +430,9 @@ class MaxPoolLayer(Layer):
 
     def setKernelWeights(self, weights):
         self.kernel = weights
+
+    def getKernel(self):
+        return self.kernel
 
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
@@ -468,10 +484,8 @@ class FlatteningLayer(Layer):
 
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
-
         dataOut = dataIn.flatten()
         self.setPrevOut(dataOut)
-
         return dataOut
     
     def gradient(self):
