@@ -299,22 +299,43 @@ class MaxPoolLayer(Layer):
                 max = -9999
                 for i in range(1, window_x+1):
                     for j in range(1, window_y+1):
-                        pos_1 = int(a - (window_x/2) + i)
-                        pos_2 = int(b - (window_y/2) + j)
+                        pos_1 = int(a - (window_x//2) + i)
+                        pos_2 = int(b - (window_y//2) + j)
                         if map[pos_1][pos_2] > max:
                             max = map[pos_1][pos_2]
                 feature_map[a, b] = max
         return feature_map
     
-    def map(self, gradIn):
-        pass
+    def map(self, prev_in, gradIn):
+        prev_x, prev_y = prev_in.shape
+        window_x = self.window_shape[0]
+        window_y = self.window_shape[1]
+        slides_x = 1+int((prev_x-window_x)/self.stride)
+        slides_y = 1+int((prev_y-window_y)/self.stride)
+        grad = np.zeros((prev_x, prev_y))
+        for a in range(slides_x):
+            for b in range(slides_y):
+                max = -9999
+                max_index = [0, 0]
+                for i in range(1, window_x+1):
+                    for j in range(1, window_y+1):
+                        pos_1 = int(a - (window_x//2) + i)
+                        pos_2 = int(b - (window_y//2) + j)
+                        if prev_in[pos_1][pos_2] > max:
+                            max = prev_in[pos_1][pos_2]
+                            max_index[0] = pos_1
+                            max_index[1] = pos_2
+                grad[max_index[0], max_index[1]] = gradIn[a, b]
+        return grad
     
-    def gradient(self,):
-        
-    
+    def gradient(self, gradIn):
+        prev_in = self.getPrevIn()
+        grad = self.map(prev_in, gradIn)
+        return grad
+
     def backward (self, gradIn):
         gradOut = self.gradient(gradIn)
-        pass
+        return gradOut
 
 
 class FlatteningLayer(Layer):
