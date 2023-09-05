@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+import math
 np.set_printoptions(suppress=True)
 
 
@@ -240,7 +241,7 @@ class ConvolutionalLayer(Layer):
     
     def backprop_correlate(self, pad_grad):
         pad_grad_x, pad_grad_y = pad_grad.shape
-        kernel_transpose = np.transpose(kernel_transpose)
+        kernel_transpose = np.transpose(self.kernel)
         kt_x, kt_y = kernel_transpose.shape
         feature_x = 1+int((pad_grad_x-kt_x)/self.stride)
         feature_y = 1+int((pad_grad_y-kt_y)/self.stride)
@@ -262,8 +263,8 @@ class ConvolutionalLayer(Layer):
     
     def backward(self, gradIn):
         kernel_x = self.kernel.shape[0]  
-        m = kernel_x // 2
-        djdf = self.gradient(gradIn)
+        m = math.ceil(kernel_x / 2) + 1
+        djdf = np.array(gradIn)
         djdf_padded = np.pad(djdf, ((m, m), (m, m)), mode='constant', constant_values=0)
         gradOut = self.backprop_correlate(djdf_padded)
         return gradOut

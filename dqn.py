@@ -14,15 +14,15 @@ class DQN():
 
     def getNetwork(self):
         # instantiate layers
-        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4), stride=4)
+        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
         L2 = layers.ReLuLayer()
-        L3 = layers.ConvolutionalLayer(kernel_shape=(2, 2), stride=2)
+        L3 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
         L4 = layers.ReLuLayer()
-        L5 = layers.MaxPoolLayer(window_shape=(2, 2), stride=2)
+        L5 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
         L6 = layers.FlatteningLayer()
-        L7 = layers.FullyConnectedLayer(sizeIn=130, sizeOut=50)
+        L7 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100)
         L8 = layers.ReLuLayer()
-        L9 = layers.FullyConnectedLayer(sizeIn=50, sizeOut=6)
+        L9 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
         L10 = layers.SquaredTemporalDifferenceError()
         # assemble network
         network = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10]
