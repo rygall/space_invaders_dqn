@@ -18,7 +18,7 @@ episode_actions = np.zeros((max_episodes, max_epochs))
 curr_actions = np.zeros(max_epochs)
 
 for episode in range(max_episodes):
-
+    print("Episode", episode)
     observation, info = env.reset()
 
     for epoch in range(max_epochs):
@@ -48,7 +48,7 @@ for episode in range(max_episodes):
 
     episode_actions[episode] = curr_actions
     curr_actions = np.zeros(max_epochs)
-    
+
 np.save("Episode-Actions.npy", episode_actions)
 
 # save agent weights
