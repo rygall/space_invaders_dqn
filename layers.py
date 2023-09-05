@@ -185,13 +185,18 @@ class ReLuLayer(Layer):
 
 class ConvolutionalLayer(Layer):
 
-    def __init__(self, kernel_shape, stride=1):
+    def __init__(self, kernel_shape, stride=1, eta=0.0001):
         super().__init__()
         self.kernel = np.random.rand(kernel_shape[0], kernel_shape[1])
         self.stride = stride
+        self.eta = eta
 
     def setKernelWeights(self, weights):
         self.kernel = weights
+
+    def updateWeights(self, gradIn):
+        dJdK = self.grad_correlate(gradIn)
+        self.weights -= self.eta*dJdK
 
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
@@ -361,6 +366,9 @@ class SquaredTemporalDifferenceError():
     def __init__(self, gamma=0.5):
         self.gamma = gamma
     
-    def gradient(self, Q, Q_next, reward):
-        grad = Q - (reward + (self.gamma*Q_next))
+    def gradient(self, action, Q, Q_next, reward):
+        q_next_max = Q_next.max()
+        q_new = (Q - (reward + (self.gamma*q_next_max)))**2
+        grad = np.zeros(q_new.shape)
+        grad[action] = q_new[action] 
         return grad
