@@ -10,14 +10,11 @@ agent = dqn.DQN()
 env = gym.make("ALE/SpaceInvaders-v5", render_mode="human", obs_type="grayscale") #render_mode="human"
 
 # define training parameters
-max_epochs = 1000
+max_epochs = 5000
 max_episodes = 100
 observation, info = env.reset()
     
 for episode in range(max_episodes):
-
-    # save current weights
-    agent.save()
 
     for epoch in range(max_epochs):
 
@@ -43,6 +40,8 @@ for episode in range(max_episodes):
             observation, info = env.reset()
             break
 
+# save agent weights
 agent.save()
-        
+
+# close the environment  
 env.close()

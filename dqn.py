@@ -14,18 +14,19 @@ class DQN():
 
     def network(self):
         # instantiate layers
-        L2 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
-        L3 = layers.ReLuLayer()
-        L4 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
-        L5 = layers.ReLuLayer()
-        L6 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
-        L7 = layers.FlatteningLayer()
-        L8 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100)
-        L9 = layers.ReLuLayer()
-        L10 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
-        L11 = layers.SquaredTemporalDifferenceError()
+        L0 = layers.InputLayer(np.zeros((210, 160)))
+        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
+        L2 = layers.ReLuLayer()
+        L3 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
+        L4 = layers.ReLuLayer()
+        L5 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
+        L6 = layers.FlatteningLayer()
+        L7 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100)
+        L8 = layers.ReLuLayer()
+        L9 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
+        L10 = layers.SquaredTemporalDifferenceError()
         # assemble network
-        network = [L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]
+        network = [L0, L1, L2, L3, L4, L5, L6, L7, L8, L9, L10]
         return network
 
     def action(self, state):
@@ -74,4 +75,9 @@ class DQN():
         np.save("L10_bias.npy", self.network[9].getBiases())
 
     def load(self):
-        
+        self.network[1].setKernel(np.load("L2.npy"))
+        self.network[3].setKernel(np.load("L4.npy"))
+        self.network[7].setWeights(np.load("L8.npy"))
+        self.network[7].setBiases(np.load("L8_bias.npy"))
+        self.network[9].setWeights(np.load("L10.npy"))
+        self.network[9].setBiases(np.load("L10_bias.npy"))

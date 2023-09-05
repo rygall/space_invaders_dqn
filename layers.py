@@ -34,8 +34,9 @@ class Layer(ABC):
 
 class InputLayer(Layer):
 
-    def __init__(self, dataIn):
+    def __init__(self, dataIn, zscore='False'):
         super().__init__()
+        self.zscore = zscore
         self.mean = np.mean(dataIn, axis=0)
         self.std = np.std(dataIn, axis=0, ddof=1)
         if isinstance(self.std, float):
@@ -48,10 +49,14 @@ class InputLayer(Layer):
 
     def forward(self, dataIn):
         self.setPrevIn = dataIn
-        zscored_matrix = (dataIn - self.mean) / self.std
-        self.setPrevOut = zscored_matrix
-        return zscored_matrix
-
+        if self.zscore != 'False': 
+            zscored_matrix = (dataIn - self.mean) / self.std
+            self.setPrevOut = zscored_matrix
+            return zscored_matrix
+        else:
+            self.setPrevOut(dataIn)
+            return dataIn
+        
     def gradient(self):
         pass
 
@@ -177,8 +182,11 @@ class ConvolutionalLayer(Layer):
         self.stride = stride
         self.eta = eta
 
-    def setKernelWeights(self, weights):
-        self.kernel = weights
+    def setKernel(self, kernel):
+        self.kernel = kernel
+
+    def getKernel(self):
+        return self.kernel
 
     @jit
     def updateWeights(self, gradIn):
