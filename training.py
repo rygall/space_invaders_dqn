@@ -10,8 +10,8 @@ agent = dqn.DQN()
 env = gym.make("ALE/SpaceInvaders-v5", obs_type="grayscale")
 
 # define training parameters
-max_epochs = 100000
-max_episodes = 100
+max_epochs = 1000
+max_episodes = 10
 observation, info = env.reset()
 
 actions = np.zeros(max_epochs)
@@ -21,8 +21,8 @@ for episode in range(max_episodes):
     observation, info = env.reset()
 
     for epoch in range(max_epochs):
-        if epoch % 10 == 0:
-            print("Epoch", epoch)
+        if epoch % 100 == 0:
+            print("Epoch", epoch) 
 
         # get through first 33 frames since nothing happens
         if epoch < 33:
@@ -32,20 +32,21 @@ for episode in range(max_episodes):
         # get next action from DQN
         action = agent.action(observation)
         actions[epoch] = action
+        print(action)
 
         # take a step in the environment
         observation, reward, terminated, truncated, info = env.step(action)
-        
-        # train the DQN given new data
-        agent.train(observation, reward, epoch)
 
         # copy network to target network
         if (epoch % 50) == 0:
             agent.updateTarget()
         
-        if terminated or truncated:
+        if terminated or truncated:            
             observation, info = env.reset()
             break
+        
+        # train the DQN given new data
+        agent.train(observation, reward, epoch)
 
     # save agent weights and actions
     np.save("episodeActions/actions_" + str(episode) + ".npy", actions)
