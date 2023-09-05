@@ -7,7 +7,7 @@ import numpy as np
 agent = dqn.DQN()
 
 # instantiate environment
-env = gym.make("ALE/SpaceInvaders-v5", obs_type="grayscale")
+env = gym.make("ALE/SpaceInvaders-v5", render_mode="human", obs_type="grayscale") #render_mode="human"
 
 # define training parameters
 max_epochs = 1000

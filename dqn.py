@@ -14,18 +14,19 @@ class DQN():
 
     def getNetwork(self):
         # instantiate layers
-        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
-        L2 = layers.ReLuLayer()
-        L3 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
-        L4 = layers.ReLuLayer()
-        L5 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
-        L6 = layers.FlatteningLayer()
-        L7 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100)
-        L8 = layers.ReLuLayer()
-        L9 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
-        L10 = layers.SquaredTemporalDifferenceError()
+        L1 = layers.InputLayer(np.zeros((210, 160)))
+        L2 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
+        L3 = layers.ReLuLayer()
+        L4 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
+        L5 = layers.ReLuLayer()
+        L6 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
+        L7 = layers.FlatteningLayer()
+        L8 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100)
+        L9 = layers.ReLuLayer()
+        L10 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
+        L11 = layers.SquaredTemporalDifferenceError()
         # assemble network
-        network = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10]
+        network = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]
         return network
 
     def action(self, state):
@@ -43,7 +44,7 @@ class DQN():
         else:
             self.prev_action = t.argmax()
         self.prev_q = t
-        return t.argmax()
+        return self.prev_action
 
     def train(self, state, reward, epoch):
 
@@ -56,10 +57,10 @@ class DQN():
         grad = self.network[-1].gradient(self.prev_action, self.prev_q, h, reward)
         for z in range(len(self.network)-2, 0, -1):
             newgrad = self.network[z].backward(grad)
-            #if(isinstance(self.network[z], layers.FullyConnectedLayer)):
-                #self.network[z].updateWeights(np.array(grad), epoch)
-            #if(isinstance(self.network[z], layers.ConvolutionalLayer)):
-                #self.network[z].updateWeights(np.array(grad))
+            if(isinstance(self.network[z], layers.FullyConnectedLayer)):
+                self.network[z].updateWeights(np.array(grad), epoch)
+            if(isinstance(self.network[z], layers.ConvolutionalLayer)):
+                self.network[z].updateWeights(np.array(grad))
             grad = newgrad
 
     def copy(self):

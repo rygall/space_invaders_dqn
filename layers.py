@@ -114,7 +114,10 @@ class FullyConnectedLayer(Layer):
 
     def updateWeights(self, gradIn, epoch):
         dJdb = np.sum(gradIn, axis=0) / gradIn.shape[0]
-        dJdW = (self.getPrevIn().T @ gradIn) / gradIn.shape[0]
+        x = self.getPrevIn()
+        x_T = self.getPrevIn().T
+        x_T_2 = np.atleast_2d(self.getPrevIn()).T
+        dJdW = (x_T_2 * gradIn) / gradIn.shape[0]
         self.biases -= self.eta*dJdb
         if self.lr_method == 'base':
             self.weights -= self.eta*dJdW
@@ -197,7 +200,7 @@ class ConvolutionalLayer(Layer):
 
     def updateWeights(self, gradIn):
         dJdK = self.grad_correlate(gradIn)
-        self.weights -= self.eta*dJdK
+        self.kernel -= self.eta*dJdK
 
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
