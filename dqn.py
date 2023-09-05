@@ -14,7 +14,6 @@ class DQN():
 
     def network(self):
         # instantiate layers
-        L1 = layers.InputLayer(np.zeros((210, 160)))
         L2 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
         L3 = layers.ReLuLayer()
         L4 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
@@ -26,7 +25,7 @@ class DQN():
         L10 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
         L11 = layers.SquaredTemporalDifferenceError()
         # assemble network
-        network = [L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]
+        network = [L2, L3, L4, L5, L6, L7, L8, L9, L10, L11]
         return network
 
     def action(self, state):
@@ -67,7 +66,12 @@ class DQN():
         self.target_network = self.network
 
     def save(self):
-        np.save(
+        np.save("L2.npy", self.network[1].getKernel())
+        np.save("L4.npy", self.network[3].getKernel())
+        np.save("L8.npy", self.network[7].getWeights())
+        np.save("L8_bias.npy", self.network[7].getBiases())
+        np.save("L10.npy", self.network[9].getWeights())
+        np.save("L10_bias.npy", self.network[9].getBiases())
 
     def load(self):
-        pass
+        

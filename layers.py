@@ -140,42 +140,19 @@ class FullyConnectedLayer(Layer):
         return gradOut
 
 
-class LinearLayer(Layer):
-
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, dataIn):
-        self.setPrevIn(dataIn)
-        self.setPrevOut(dataIn) 
-        return dataIn
-
-    def gradient(self):
-        a = np.ones(np.shape(self.getPrevOut()))
-        if a.ndim == 1:
-            gradient = np.eye(len(a)) * a
-        else:
-            gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
-        return gradient
-    
-    def backward (self, gradIn):
-        delta = np.array(gradIn)
-        dgdz = self.gradient()
-        gradOut = np.einsum('...i, ...ij', delta, dgdz)
-        return gradOut
-
-
 class ReLuLayer(Layer):
 
     def __init__(self):
         super().__init__()
 
+    @jit
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
         y = np.maximum(0.0, dataIn)
         self.setPrevOut(y) 
         return y
     
+    @jit
     def gradient(self):
         a = np.where(self.getPrevOut() < 0, 0, 1)
         if a.ndim == 1:
@@ -184,6 +161,7 @@ class ReLuLayer(Layer):
             gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
         return gradient
     
+    @jit
     def backward (self, gradIn):
         delta = np.array(gradIn)
         dgdz = self.gradient()
@@ -201,8 +179,6 @@ class ConvolutionalLayer(Layer):
 
     def setKernelWeights(self, weights):
         self.kernel = weights
-
-    def getKernel
 
     @jit
     def updateWeights(self, gradIn):
