@@ -49,7 +49,7 @@ for episode in range(max_episodes):
     episode_actions[episode] = curr_actions
     curr_actions = np.zeros(max_epochs)
 
-np.save("Episode-Actions.npy", episode_actions)
+    np.save("Episode-Actions_" + episode + ".npy", episode_actions)
 
 # save agent weights
 agent.save()
