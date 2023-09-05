@@ -17,8 +17,7 @@ curr_actions = np.load(load_action)
 
 for epoch in range(max_epochs):    
     # take a step in the environment
-    print(curr_actions[20])
-    observation, reward, terminated, truncated, info = env.step(int(curr_actions[20][epoch]))
+    observation, reward, terminated, truncated, info = env.step(int(curr_actions[0][epoch]))
     
     if terminated or truncated:
         observation, info = env.reset()
