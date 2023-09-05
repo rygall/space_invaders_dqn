@@ -66,18 +66,18 @@ class DQN():
     def updateTarget(self):
         self.target_network = self.network
 
-    def save(self):
-        np.save("L2.npy", self.network[1].getKernel())
-        np.save("L4.npy", self.network[3].getKernel())
-        np.save("L8.npy", self.network[7].getWeights())
-        np.save("L8_bias.npy", self.network[7].getBiases())
-        np.save("L10.npy", self.network[9].getWeights())
-        np.save("L10_bias.npy", self.network[9].getBiases())
+    def save(self, episode):
+        np.save("saves/L2_" + str(episode) + ".npy", self.network[1].getKernel())
+        np.save("saves/L4_" + str(episode) + ".npy", self.network[3].getKernel())
+        np.save("saves/L8_" + str(episode) + ".npy", self.network[7].getWeights())
+        np.save("saves/L8_bias_" + str(episode) + ".npy", self.network[7].getBiases())
+        np.save("saves/L10_" + str(episode) + ".npy", self.network[9].getWeights())
+        np.save("saves/L10_bias_" + str(episode) + ".npy", self.network[9].getBiases())
 
-    def load(self):
-        self.network[1].setKernel(np.load("L2.npy"))
-        self.network[3].setKernel(np.load("L4.npy"))
-        self.network[7].setWeights(np.load("L8.npy"))
-        self.network[7].setBiases(np.load("L8_bias.npy"))
-        self.network[9].setWeights(np.load("L10.npy"))
-        self.network[9].setBiases(np.load("L10_bias.npy"))
+    def load(self, episode):
+        self.network[1].setKernel(np.load("saves/L2_" + str(episode) + ".npy"))
+        self.network[3].setKernel(np.load("saves/L4_" + str(episode) + ".npy"))
+        self.network[7].setWeights(np.load("saves/L8_" + str(episode) + ".npy"))
+        self.network[7].setBiases(np.load("saves/L8_bias_" + str(episode) + ".npy"))
+        self.network[9].setWeights(np.load("saves/L10_" + str(episode) + ".npy"))
+        self.network[9].setBiases(np.load("saves/L10_bias_" + str(episode) + ".npy"))
