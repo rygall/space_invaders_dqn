@@ -7,14 +7,16 @@ import numpy as np
 agent = dqn.DQN()
 
 # instantiate environment
-env = gym.make("ALE/SpaceInvaders-v5", render_mode="human", obs_type="grayscale") #render_mode="human"
+env = gym.make("ALE/SpaceInvaders-v5", obs_type="grayscale")
 
 # define training parameters
-max_epochs = 5000
+max_epochs = 10000
 max_episodes = 100
 observation, info = env.reset()
     
 for episode in range(max_episodes):
+
+    observation, info = env.reset()
 
     for epoch in range(max_epochs):
 
@@ -27,7 +29,7 @@ for episode in range(max_episodes):
         action = agent.action(observation)
 
         # take a step in the environment
-        observation, reward, terminated, truncated, info = env.step(action)
+        observation, reward, terminated, truncated, info = env.step(2)
         
         # train the DQN given new data
         agent.train(observation, reward, epoch)
