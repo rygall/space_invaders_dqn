@@ -5,14 +5,14 @@ import random
 class DQN():
 
     def __init__(self, epsilon=0.75):
-        self.network = self.getNetwork()
+        self.network = self.network()
         self.target_network = self.network
         self.epsilon = epsilon
         self.prev_action = None
         self.prev_state = None
         self.prev_q = None
 
-    def getNetwork(self):
+    def network(self):
         # instantiate layers
         L1 = layers.InputLayer(np.zeros((210, 160)))
         L2 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
@@ -63,8 +63,11 @@ class DQN():
                 self.network[z].updateWeights(np.array(grad))
             grad = newgrad
 
-    def copy(self):
-        pass
+    def updateTarget(self):
+        self.target_network = self.network
 
     def save(self):
+        np.save(
+
+    def load(self):
         pass

@@ -23,7 +23,11 @@ for epoch in range(1, max_epochs):
     
     # train the DQN given new data
     agent.train(observation, reward, epoch)
-        
+
+    # copy network to target network
+    if (epoch % 50) == 0:
+        agent.updateTarget()
+      
     if terminated or truncated:
         observation, info = env.reset()
         
