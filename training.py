@@ -48,8 +48,6 @@ for episode in range(max_episodes):
         # train the DQN given new data
         agent.train(observation, reward, epoch)
 
-        agent.print()
-
         if agent.checkNaN() == True:
             print("NaN detected")
 

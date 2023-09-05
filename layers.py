@@ -184,7 +184,7 @@ class ConvolutionalLayer(Layer):
 
     def updateWeights(self, gradIn):
         dJdK = self.grad_correlate(gradIn)
-        self.kernel -= self.eta*dJdK
+        self.kernel += self.eta*dJdK
         if np.isnan(np.min(self.kernel)):
             print("check")
 
@@ -361,4 +361,4 @@ class SquaredTemporalDifferenceError():
         q_new = (Q - (reward + (self.gamma*q_next_max)))**2
         grad = np.zeros(q_new.shape)
         grad[action] = q_new[action] 
-        return -grad
+        return grad
