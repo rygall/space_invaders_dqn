@@ -50,11 +50,6 @@ for episode in range(max_episodes):
         # train the DQN given new data
         agent.train(observation, reward)
 
-        agent.print()
-
-        if agent.checkNaN() == True:
-            print("NaN detected")
-
 
     # save agent weights and actions
     np.save("episodeActions/actions_" + str(episode) + ".npy", actions)

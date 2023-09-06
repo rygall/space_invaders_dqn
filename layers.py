@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import math
 from numba import jit
-#np.set_printoptions(suppress=True)
+np.set_printoptions(suppress=True)
 
 
 class Layer(ABC):

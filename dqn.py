@@ -15,13 +15,13 @@ class DQN():
     def new_network(self):
         # instantiate layers
         L0 = layers.InputLayer(np.zeros((210, 160)))
-        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
-        L2 = layers.ConvolutionalLayer(kernel_shape=(4, 4))
+        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4), eta=0.01)
+        L2 = layers.ConvolutionalLayer(kernel_shape=(4, 4), eta=0.01)
         L3 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
         L4 = layers.FlatteningLayer()
-        L5 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100)
+        L5 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100, eta=0.001)
         L6 = layers.ReLuLayer()
-        L7 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
+        L7 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6, eta=0.001)
         L8 = layers.SquaredTemporalDifferenceError()
         # assemble network
         network = [L0, L1, L2, L3, L4, L5, L6, L7, L8]
@@ -66,11 +66,11 @@ class DQN():
 
     def save(self, episode):
         np.save("saves/L2_" + str(episode) + ".npy", self.network[1].getKernel())
-        np.save("saves/L4_" + str(episode) + ".npy", self.network[3].getKernel())
-        np.save("saves/L8_" + str(episode) + ".npy", self.network[7].getWeights())
-        np.save("saves/L8_bias_" + str(episode) + ".npy", self.network[7].getBiases())
-        np.save("saves/L10_" + str(episode) + ".npy", self.network[9].getWeights())
-        np.save("saves/L10_bias_" + str(episode) + ".npy", self.network[9].getBiases())
+        np.save("saves/L4_" + str(episode) + ".npy", self.network[1].getKernel())
+        np.save("saves/L8_" + str(episode) + ".npy", self.network[5].getWeights())
+        np.save("saves/L8_bias_" + str(episode) + ".npy", self.network[5].getBiases())
+        np.save("saves/L10_" + str(episode) + ".npy", self.network[7].getWeights())
+        np.save("saves/L10_bias_" + str(episode) + ".npy", self.network[7].getBiases())
 
     def load(self, episode):
         self.network[1].setKernel(np.load("saves/L2_" + str(episode) + ".npy"))
@@ -83,10 +83,10 @@ class DQN():
     def print(self):
         print("First Conv Layer Kernel Weights:\n", self.network[1].getKernel())
         print("Second Conv Layer Kernel Weights:\n", self.network[2].getKernel())
-        #print("First Fully Connected Layer Weights:\n", self.network[5].getWeights())
-        #print("First Fully Connected Layer Biases:\n", self.network[5].getBiases())
-        #print("Second Fully Connected Layer Weights:\n", self.network[7].getWeights())
-        #print("Second Fully Connected Layer Biases:\n", self.network[7].getBiases())
+        print("First Fully Connected Layer Weights:\n", self.network[5].getWeights())
+        print("First Fully Connected Layer Biases:\n", self.network[5].getBiases())
+        print("Second Fully Connected Layer Weights:\n", self.network[7].getWeights())
+        print("Second Fully Connected Layer Biases:\n", self.network[7].getBiases())
 
     def checkNaN(self):
         contain_NaN = False
