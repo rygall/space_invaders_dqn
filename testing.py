@@ -6,7 +6,7 @@ import numpy as np
 agent = dqn.DQN()
 
 # file name to load weights from
-load_weights_episode = "6"
+load_weights_episode = "9"
 agent.load(load_weights_episode)
 
 print("Running with weights")
@@ -21,6 +21,7 @@ env.seed = 0
 max_epochs = 1000000
 actions = np.zeros(max_epochs)
 
+# run one episode
 for epoch in range(max_epochs):   
 
     if epoch % 100 == 0:
@@ -34,14 +35,11 @@ for epoch in range(max_epochs):
     # take a step in the environment
     observation, reward, terminated, truncated, info = env.step(action)
     
-    # train the DQN given new data
-    agent.train(observation, reward, epoch)
-    
     # copy network to target network
     if (epoch % 50) == 0:
         agent.updateTarget()
         
-
+    # break if the environment terminates or truncates
     if terminated or truncated:
         observation, info = env.reset()
         break

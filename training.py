@@ -10,8 +10,8 @@ agent = dqn.DQN()
 env = gym.make("ALE/SpaceInvaders-v5", obs_type="grayscale")
 
 # define training parameters
-max_epochs = 1000
-max_episodes = 10
+max_epochs = 10000
+max_episodes = 1
 observation, info = env.reset()
 
 actions = np.zeros(max_epochs)
@@ -32,7 +32,6 @@ for episode in range(max_episodes):
         # get next action from DQN
         action = agent.action(observation)
         actions[epoch] = action
-        print(action)
 
         # take a step in the environment
         observation, reward, terminated, truncated, info = env.step(action)
@@ -41,12 +40,19 @@ for episode in range(max_episodes):
         if (epoch % 50) == 0:
             agent.updateTarget()
         
-        if terminated or truncated:            
+        if terminated or truncated:
+            print("terminated/truncated")            
             observation, info = env.reset()
             break
         
         # train the DQN given new data
         agent.train(observation, reward, epoch)
+
+        agent.print()
+
+        if agent.checkNaN() == True:
+            print("NaN detected")
+
 
     # save agent weights and actions
     np.save("episodeActions/actions_" + str(episode) + ".npy", actions)

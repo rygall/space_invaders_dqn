@@ -21,9 +21,9 @@ class DQN():
         L4 = layers.ReLuLayer()
         L5 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
         L6 = layers.FlatteningLayer()
-        L7 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100)
+        L7 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100, lr_method='adam')
         L8 = layers.ReLuLayer()
-        L9 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6)
+        L9 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6, lr_method='adam')
         L10 = layers.SquaredTemporalDifferenceError()
         # assemble network
         network = [L0, L1, L2, L3, L4, L5, L6, L7, L8, L9, L10]
@@ -81,3 +81,23 @@ class DQN():
         self.network[7].setBiases(np.load("saves/L8_bias_" + str(episode) + ".npy"))
         self.network[9].setWeights(np.load("saves/L10_" + str(episode) + ".npy"))
         self.network[9].setBiases(np.load("saves/L10_bias_" + str(episode) + ".npy"))
+
+    def print(self):
+        print("First Conv Layer Kernel Weights:\n", self.network[1].getKernel())
+        print("Second Conv Layer Kernel Weights:\n", self.network[3].getKernel())
+        print("First Fully Connected Layer Weights:\n", self.network[7].getWeights())
+        print("First Fully Connected Layer Biases:\n", self.network[7].getBiases())
+        print("Second Fully Connected Layer Weights:\n", self.network[9].getWeights())
+        print("Second Fully Connected Layer Biases:\n", self.network[9].getBiases())
+
+    def checkNaN(self):
+        contain_NaN = False
+        if np.isnan(np.min(self.network[1].getKernel())):
+            contain_NaN = True
+        if np.isnan(np.min(self.network[3].getKernel())):
+            contain_NaN = True
+        if np.isnan(np.min(self.network[7].getWeights())):
+            contain_NaN = True
+        if np.isnan(np.min(self.network[9].getWeights())):
+            contain_NaN = True
+        return contain_NaN
