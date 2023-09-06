@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import math
 from numba import jit
-np.set_printoptions(suppress=True)
+#np.set_printoptions(suppress=True)
 
 
 class Layer(ABC):
@@ -66,7 +66,7 @@ class InputLayer(Layer):
 
 class FullyConnectedLayer(Layer):
 
-    def __init__(self, sizeIn, sizeOut, eta=0.0001, weights='base', lr_method='base'):
+    def __init__(self, sizeIn, sizeOut, eta=0.001, weights='base', lr_method='base'):
         super().__init__()
         self.sizeIn = sizeIn
         self.sizeOut = sizeOut
@@ -118,24 +118,12 @@ class FullyConnectedLayer(Layer):
     def gradient(self):
         return np.transpose(self.weights)   
 
-    def updateWeights(self, gradIn, epoch):
-        dJdb = np.sum(gradIn, axis=0) / gradIn.shape[0]
-        x = self.getPrevIn()
-        x_T = self.getPrevIn().T
-        x_T_2 = np.atleast_2d(self.getPrevIn()).T
-        dJdW = (x_T_2 * gradIn) / gradIn.shape[0]
+    def updateWeights(self, gradIn):
+        dJdb = gradIn
+        x_t = np.atleast_2d(self.getPrevIn()).T
+        dJdW = (x_t * gradIn)
         self.biases -= self.eta*dJdb
-        if self.lr_method == 'base':
-            self.weights -= self.eta*dJdW
-        if self.lr_method == 'adam':
-            rho_1 = 0.9
-            rho_2 = 0.999
-            delta = 10**-8
-            self.s = (rho_1*self.s) + ((1-rho_1)*dJdW)
-            self.r = (rho_2*self.r) + ((1-rho_2)*(dJdW*dJdW))
-            # update weight based on gradient
-            z = (self.s/(1-(rho_1**epoch))) / (np.sqrt(self.r/(1-(rho_2**epoch))) + delta)
-            self.weights = self.weights - (self.eta*z)
+        self.weights -= self.eta*dJdW
 
     def backward (self, gradIn):
         gradOut = gradIn @ self.gradient()
@@ -164,15 +152,16 @@ class ReLuLayer(Layer):
     def backward (self, gradIn):
         delta = np.array(gradIn)
         dgdz = self.gradient()
-        gradOut = np.einsum('...i, ...ij', delta, dgdz)
+        #gradOut = np.einsum('...i, ...ij', delta, dgdz)
+        gradOut = dgdz @ delta
         return gradOut
 
 
 class ConvolutionalLayer(Layer):
 
-    def __init__(self, kernel_shape, stride=1, eta=0.0001):
+    def __init__(self, kernel_shape, stride=1, eta=0.001):
         super().__init__()
-        self.kernel = np.random.rand(kernel_shape[0], kernel_shape[1]) * 10
+        self.kernel = np.random.uniform(low=-0.0001, high=0.0001, size=kernel_shape)
         self.stride = stride
         self.eta = eta
 
@@ -184,9 +173,7 @@ class ConvolutionalLayer(Layer):
 
     def updateWeights(self, gradIn):
         dJdK = self.grad_correlate(gradIn)
-        self.kernel += self.eta*dJdK
-        if np.isnan(np.min(self.kernel)):
-            print("check")
+        self.kernel -= self.eta*dJdK
 
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
@@ -207,7 +194,7 @@ class ConvolutionalLayer(Layer):
                     for j in range(1, kernel_y+1):
                         pos_1 = int(a - (kernel_x//2) + i)
                         pos_2 = int(b - (kernel_y//2) + j)
-                        sum += image[pos_1][pos_2] * self.kernel[(i-1)][(j-1)] 
+                        sum += (image[pos_1][pos_2]+0.0000001) * (self.kernel[(i-1)][(j-1)]+0.0000001) 
                 feature_map[a, b] = sum
         return feature_map
     
@@ -226,7 +213,7 @@ class ConvolutionalLayer(Layer):
                         pos_2 = int(b - (gradIn_y//2) + j)
                         sum += self.getPrevIn()[pos_1][pos_2] * gradIn[(i-1)][(j-1)] 
                 gradient[a, b] = sum
-        return gradient
+        return (gradient+0.000001)
     
     def backprop_correlate(self, pad_grad):
         pad_grad_x, pad_grad_y = pad_grad.shape
@@ -247,8 +234,7 @@ class ConvolutionalLayer(Layer):
         return gradOut
     
     def gradient(self, gradIn):
-        gradient = self.grad_correlate(gradIn)
-        return gradient
+        pass
     
     def backward(self, gradIn):
         kernel_x = self.kernel.shape[0]  
@@ -265,12 +251,6 @@ class MaxPoolLayer(Layer):
         super().__init__()
         self.window_shape = window_shape
         self.stride = stride
-
-    def setKernelWeights(self, weights):
-        self.kernel = weights
-
-    def getKernel(self):
-        return self.kernel
 
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
@@ -358,7 +338,7 @@ class SquaredTemporalDifferenceError():
     
     def gradient(self, action, Q, Q_next, reward):
         q_next_max = Q_next.max()
-        q_new = (Q - (reward + (self.gamma*q_next_max)))**2
+        q_new = -(Q - (reward + (self.gamma*(q_next_max+0.00000001))))**2
         grad = np.zeros(q_new.shape)
-        grad[action] = q_new[action] 
+        grad[action] = q_new[action]
         return grad

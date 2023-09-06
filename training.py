@@ -6,6 +6,8 @@ import numpy as np
 # instantiate dqn
 agent = dqn.DQN()
 
+agent.print()
+
 # instantiate environment
 env = gym.make("ALE/SpaceInvaders-v5", obs_type="grayscale")
 
@@ -46,7 +48,9 @@ for episode in range(max_episodes):
             break
         
         # train the DQN given new data
-        agent.train(observation, reward, epoch)
+        agent.train(observation, reward)
+
+        agent.print()
 
         if agent.checkNaN() == True:
             print("NaN detected")
