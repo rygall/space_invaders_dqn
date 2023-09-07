@@ -3,13 +3,15 @@ import dqn
 import numpy as np
 
 # instantiate dqn
-agent = dqn.DQN()
+agent = dqn.DQN(epsilon=1)
 
 # file name to load weights from
 load_weights_episode = "9"
 agent.load(load_weights_episode)
 
 print("Running with weights")
+
+agent.print()
 
 # instantiate environment
 env = gym.make("ALE/SpaceInvaders-v5", obs_type="grayscale")

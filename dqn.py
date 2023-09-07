@@ -6,7 +6,7 @@ class DQN():
 
     def __init__(self, epsilon=0.75):
         self.network = self.new_network()
-        self.target_network = self.new_network()
+        self.target_network = self.network
         self.epsilon = epsilon
         self.prev_action = None
         self.prev_state = None
@@ -15,24 +15,22 @@ class DQN():
     def new_network(self):
         # instantiate layers
         L0 = layers.InputLayer(np.zeros((210, 160)))
-        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4), eta=0.01)
-        L2 = layers.ConvolutionalLayer(kernel_shape=(4, 4), eta=0.01)
-        L3 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
-        L4 = layers.FlatteningLayer()
-        L5 = layers.FullyConnectedLayer(sizeIn=1938, sizeOut=100, eta=0.001)
-        L6 = layers.ReLuLayer()
-        L7 = layers.FullyConnectedLayer(sizeIn=100, sizeOut=6, eta=0.001)
-        L8 = layers.SquaredTemporalDifferenceError()
+        L1 = layers.ConvolutionalLayer(kernel_shape=(4, 4), eta=0.0001)
+        L2 = layers.MaxPoolLayer(window_shape=(4, 4), stride=4)
+        L3 = layers.FlatteningLayer()
+        L4 = layers.FullyConnectedLayer(sizeIn=1989, sizeOut=50, eta=0.0001)
+        L5 = layers.ReLuLayer()
+        L6 = layers.FullyConnectedLayer(sizeIn=50, sizeOut=6, eta=0.0001)
+        L7 = layers.SquaredTemporalDifferenceError(gamma=0.2)
         # assemble network
-        network = [L0, L1, L2, L3, L4, L5, L6, L7, L8]
+        network = [L0, L1, L2, L3, L4, L5, L6, L7]
         return network
 
     def action(self, state):
-
-        # forward propogation through network
+       # forward propogation through network
         t = state
         for k in range(len(self.network)-1):
-            t = self.network[k].forward(t)
+            t = self.network[k].forward(t) 
 
         #store state, action, and associated q value
         self.prev_state = state
@@ -64,29 +62,32 @@ class DQN():
     def updateTarget(self):
         self.target_network = self.network
 
+    def getEpsilon(self):
+        return self.epsilon
+    
+    def setEpsilon(self, new_epsilon):
+        self.epsilon = new_epsilon
+
     def save(self, episode):
         np.save("saves/L2_" + str(episode) + ".npy", self.network[1].getKernel())
-        np.save("saves/L4_" + str(episode) + ".npy", self.network[1].getKernel())
-        np.save("saves/L8_" + str(episode) + ".npy", self.network[5].getWeights())
-        np.save("saves/L8_bias_" + str(episode) + ".npy", self.network[5].getBiases())
-        np.save("saves/L10_" + str(episode) + ".npy", self.network[7].getWeights())
-        np.save("saves/L10_bias_" + str(episode) + ".npy", self.network[7].getBiases())
+        np.save("saves/L8_" + str(episode) + ".npy", self.network[4].getWeights())
+        np.save("saves/L8_bias_" + str(episode) + ".npy", self.network[4].getBiases())
+        np.save("saves/L10_" + str(episode) + ".npy", self.network[6].getWeights())
+        np.save("saves/L10_bias_" + str(episode) + ".npy", self.network[6].getBiases())
 
     def load(self, episode):
         self.network[1].setKernel(np.load("saves/L2_" + str(episode) + ".npy"))
-        self.network[2].setKernel(np.load("saves/L4_" + str(episode) + ".npy"))
-        self.network[5].setWeights(np.load("saves/L8_" + str(episode) + ".npy"))
-        self.network[5].setBiases(np.load("saves/L8_bias_" + str(episode) + ".npy"))
-        self.network[7].setWeights(np.load("saves/L10_" + str(episode) + ".npy"))
-        self.network[7].setBiases(np.load("saves/L10_bias_" + str(episode) + ".npy"))
+        self.network[4].setWeights(np.load("saves/L8_" + str(episode) + ".npy"))
+        self.network[4].setBiases(np.load("saves/L8_bias_" + str(episode) + ".npy"))
+        self.network[6].setWeights(np.load("saves/L10_" + str(episode) + ".npy"))
+        self.network[6].setBiases(np.load("saves/L10_bias_" + str(episode) + ".npy"))
 
     def print(self):
         print("First Conv Layer Kernel Weights:\n", self.network[1].getKernel())
-        print("Second Conv Layer Kernel Weights:\n", self.network[2].getKernel())
-        print("First Fully Connected Layer Weights:\n", self.network[5].getWeights())
-        print("First Fully Connected Layer Biases:\n", self.network[5].getBiases())
-        print("Second Fully Connected Layer Weights:\n", self.network[7].getWeights())
-        print("Second Fully Connected Layer Biases:\n", self.network[7].getBiases())
+        print("First Fully Connected Layer Weights:\n", self.network[4].getWeights())
+        print("First Fully Connected Layer Biases:\n", self.network[4].getBiases())
+        print("Second Fully Connected Layer Weights:\n", self.network[6].getWeights())
+        print("Second Fully Connected Layer Biases:\n", self.network[6].getBiases())
 
     def checkNaN(self):
         contain_NaN = False
