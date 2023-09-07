@@ -47,6 +47,7 @@ class InputLayer(Layer):
                 if self.std[i] == 0:
                     self.std[i] = 1
 
+    @jit
     def forward(self, dataIn):
         self.setPrevIn = dataIn
         if self.zscore != 'False': 
@@ -66,7 +67,7 @@ class InputLayer(Layer):
 
 class FullyConnectedLayer(Layer):
 
-    def __init__(self, sizeIn, sizeOut, eta=0.001, weights='base', lr_method='base'):
+    def __init__(self, sizeIn, sizeOut, eta=0.0001, weights='base', lr_method='base'):
         super().__init__()
         self.sizeIn = sizeIn
         self.sizeOut = sizeOut
@@ -79,8 +80,8 @@ class FullyConnectedLayer(Layer):
 
     def initWeights(self, sizeIn, sizeOut, method):
         if method == 'base':
-            weights = np.random.uniform(low=-0.0001, high=0.0001, size=(sizeIn, sizeOut))
-            biases = np.random.uniform(low=-0.0001, high=0.0001, size=sizeOut)
+            weights = np.random.uniform(low=-0.01, high=0.01, size=(sizeIn, sizeOut))
+            biases = np.random.uniform(low=-0.01, high=0.01, size=sizeOut)
             return weights, biases
         if method == 'xavier':
             weights = np.random.uniform(low=-np.sqrt(6/(self.sizeIn+self.sizeOut)), high=-np.sqrt(6/(self.sizeIn+self.sizeOut)), size=(sizeIn, sizeOut))
@@ -109,15 +110,18 @@ class FullyConnectedLayer(Layer):
         else:
             print("mismatch in shape of input biases to required shape of biases: input_shape =", new_shape, "required_shape =", req_shape)
 
+    @jit
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
         y = dataIn @ self.weights + self.biases
         self.setPrevOut(y)
         return y
 
+    @jit
     def gradient(self):
         return np.transpose(self.weights)   
 
+    @jit
     def updateWeights(self, gradIn):
         dJdb = gradIn
         x_t = np.atleast_2d(self.getPrevIn()).T
@@ -125,6 +129,7 @@ class FullyConnectedLayer(Layer):
         self.biases -= self.eta*dJdb
         self.weights -= self.eta*dJdW
 
+    @jit
     def backward (self, gradIn):
         gradOut = gradIn @ self.gradient()
         return gradOut
@@ -135,12 +140,14 @@ class ReLuLayer(Layer):
     def __init__(self):
         super().__init__()
 
+    @jit
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
         y = np.maximum(0.0, dataIn)
         self.setPrevOut(y) 
         return y
     
+    @jit
     def gradient(self):
         a = np.where(self.getPrevOut() < 0, 0, 1)
         if a.ndim == 1:
@@ -148,7 +155,7 @@ class ReLuLayer(Layer):
         else:
             gradient = np.eye(np.size(self.getPrevOut(), axis=1)) * a[:, np.newaxis, :]
         return gradient
-    
+    @jit
     def backward (self, gradIn):
         delta = np.array(gradIn)
         dgdz = self.gradient()
@@ -159,9 +166,9 @@ class ReLuLayer(Layer):
 
 class ConvolutionalLayer(Layer):
 
-    def __init__(self, kernel_shape, stride=1, eta=0.001):
+    def __init__(self, kernel_shape, stride=1, eta=0.0001):
         super().__init__()
-        self.kernel = np.random.uniform(low=-0.0001, high=0.0001, size=kernel_shape)
+        self.kernel = np.random.uniform(low=-0.001, high=0.001, size=kernel_shape)
         self.stride = stride
         self.eta = eta
 
@@ -171,16 +178,19 @@ class ConvolutionalLayer(Layer):
     def getKernel(self):
         return self.kernel
 
+    @jit
     def updateWeights(self, gradIn):
         dJdK = self.grad_correlate(gradIn)
         self.kernel -= self.eta*dJdK
 
+    @jit
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
         dataOut = self.correlate(dataIn)
         self.setPrevOut(dataOut)
         return dataOut
 
+    @jit
     def correlate(self, image):
         image_x, image_y = image.shape
         kernel_x, kernel_y = self.kernel.shape
@@ -198,6 +208,7 @@ class ConvolutionalLayer(Layer):
                 feature_map[a, b] = sum
         return feature_map
     
+    @jit
     def grad_correlate(self, gradIn):
         prevIn_x, prevIn_y = self.getPrevIn().shape
         gradIn_x, gradIn_y = gradIn.shape
@@ -215,6 +226,7 @@ class ConvolutionalLayer(Layer):
                 gradient[a, b] = sum
         return (gradient+0.000001)
     
+    @jit
     def backprop_correlate(self, pad_grad):
         pad_grad_x, pad_grad_y = pad_grad.shape
         kernel_transpose = np.transpose(self.kernel)
@@ -233,9 +245,11 @@ class ConvolutionalLayer(Layer):
                 gradOut[a, b] = sum
         return gradOut
     
+    @jit
     def gradient(self, gradIn):
         pass
     
+    @jit
     def backward(self, gradIn):
         kernel_x = self.kernel.shape[0]  
         m = math.ceil(kernel_x / 2) + 1
@@ -252,12 +266,14 @@ class MaxPoolLayer(Layer):
         self.window_shape = window_shape
         self.stride = stride
 
+    @jit
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
         dataOut = self.pool(dataIn)
         self.setPrevOut(dataOut)
         return dataOut
 
+    @jit
     def pool(self, map):
         map_x, map_y = map.shape
         window_x = self.window_shape[0]
@@ -277,6 +293,7 @@ class MaxPoolLayer(Layer):
                 feature_map[a, b] = max
         return feature_map
     
+    @jit
     def map(self, prev_in, gradIn):
         prev_x, prev_y = prev_in.shape
         grad = np.zeros((prev_x, prev_y))
@@ -301,11 +318,13 @@ class MaxPoolLayer(Layer):
                 grad[max_index[0], max_index[1]] = gradIn[a, b]
         return grad
     
+    @jit
     def gradient(self, gradIn):
         prev_in = self.getPrevIn()
         grad = self.map(prev_in, gradIn)
         return grad
 
+    @jit
     def backward (self, gradIn):
         gradOut = self.gradient(gradIn)
         return gradOut
@@ -316,16 +335,19 @@ class FlatteningLayer(Layer):
     def __init__(self):
         super().__init__()
 
+    @jit
     def forward(self, dataIn):
         self.setPrevIn(dataIn)
         dataOut = dataIn.flatten()
         self.setPrevOut(dataOut)
         return dataOut
     
+    @jit
     def gradient(self, gradIn):
         gradient = np.reshape(gradIn, self.getPrevIn().shape, order='C')
         return gradient
     
+    @jit
     def backward (self, gradIn):
         gradOut = self.gradient(gradIn)
         return gradOut
@@ -335,10 +357,16 @@ class SquaredTemporalDifferenceError():
 
     def __init__(self, gamma=0.5):
         self.gamma = gamma
-    
-    def gradient(self, action, Q, Q_next, reward):
+
+    def eval(self, action, Q, Q_next, reward):
         q_next_max = Q_next.max()
         q_new = -(Q - (reward + (self.gamma*(q_next_max+0.00000001))))**2
-        grad = np.zeros(q_new.shape)
-        grad[action] = q_new[action]
+        eval = q_new[action]
+        return eval
+    
+    @jit
+    def gradient(self, action, Q, Q_next, reward):
+        q_next_max = Q_next.max()
+        calc = -((reward + (self.gamma*q_next_max))-Q)
+        grad = np.full(np.shape(calc), calc[action])      
         return grad
