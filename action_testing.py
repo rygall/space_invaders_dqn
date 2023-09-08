@@ -3,7 +3,7 @@ import numpy as np
 
 
 # file name to load actions from
-load_action = "actions_6.npy"
+load_action = "episodeActions/actions_6.npy"
 
 # instantiate environment
 env = gym.make("ALE/SpaceInvaders-v5", render_mode = "human", obs_type="grayscale")
